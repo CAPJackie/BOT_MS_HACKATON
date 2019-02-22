@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-import users from MockUsers;
+var dataMock = require ("./MockUsers");
+var users= dataMock.users
 const { ActivityTypes, TurnContext } = require('botbuilder');
 
 const JOBS_LIST = 'jobs';
