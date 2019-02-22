@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-
+import users from MockUsers;
 const { ActivityTypes, TurnContext } = require('botbuilder');
 
 const JOBS_LIST = 'jobs';
@@ -27,10 +27,10 @@ class ProactiveBot {
         if (turnContext.activity.type === ActivityTypes.Message) {
             const utterance = (turnContext.activity.text || '').trim().toLowerCase();
             var jobIdNumber;
-
+            console.log(utterance);
             // If user types in run, create a new job.
-            if (utterance === 'run') {
-                await this.createJob(turnContext);
+            if (utterance === 'need') {
+                await this.findUsers(turnContext);
             } else if (utterance === 'show') {
                 await this.showJobs(turnContext);
             } else {
@@ -60,49 +60,37 @@ class ProactiveBot {
     }
 
     // Save job ID and conversation reference.
-    async createJob(turnContext) {
+    async findUsers(turnContext) {
         // Create a unique job ID.
-        var date = new Date();
-        var jobIdNumber = date.getTime();
-
-        // Get the conversation reference.
-        const reference = TurnContext.getConversationReference(turnContext.activity);
-
-        // Get the list of jobs. Default it to {} if it is empty.
-        const jobs = await this.jobsList.get(turnContext, {});
-
-        // Try to find previous information about the saved job.
-        const jobInfo = jobs[jobIdNumber];
-
-        try {
-            if (isEmpty(jobInfo)) {
-                // Job object is empty so we have to create it
-                await turnContext.sendActivity(`Need to create new job ID: ${ jobIdNumber }`);
-
-                // Update jobInfo with new info
-                jobs[jobIdNumber] = { completed: false, reference: reference };
-
-                try {
-                    // Save to storage
-                    await this.jobsList.set(turnContext, jobs);
-                    // Notify the user that the job has been processed
-                    await turnContext.sendActivity('Successful write to log.');
-                } catch (err) {
-                    await turnContext.sendActivity(`Write failed: ${ err.message }`);
-                }
+        const utterance = (turnContext.activity.text || '').trim().toLowerCase();
+        const words = utterance.split(' ');
+        var result=users.map(function(user){
+            if(user.career=word[1]){
+                return user
             }
-        } catch (err) {
-            await turnContext.sendActivity(`Read rejected. ${ err.message }`);
-        }
+        });
+        await turnContext.sendActivity(result);
     }
 
     async completeJob(turnContext, jobIdNumber) {
+        const utterance = (turnContext.activity.text || '').trim().toLowerCase();
         // Get the list of jobs from the bot's state property accessor.
         const jobs = await this.jobsList.get(turnContext, {});
 
         // Find the appropriate job in the list of jobs.
         let jobInfo = jobs[jobIdNumber];
 
+
+        const words = utterance.split(' ');
+
+        // If the user types done and a Job Id Number,
+        // we check if the second word input is a number.
+        if (words[0] === 'done' && !isNaN(parseInt(words[1]))) {
+            jobIdNumber = words[1];
+            await this.completeJob(turnContext, jobIdNumber);
+        } else if (words[0] === 'done' && (words.length < 2 || isNaN(parseInt(words[1])))) {
+            await turnContext.sendActivity('Enter the job ID number after "done".');
+        }
         // If no job was found, notify the user of this error state.
         if (isEmpty(jobInfo)) {
             await turnContext.sendActivity(`Sorry no job with ID ${ jobIdNumber }.`);

@@ -8,7 +8,7 @@
             "id": "1",
             "appId": "",
             "appPassword": "",
-            "endpoint": "http://localhost:3978/api/messages"
+            "endpoint": "http://localhost:7000/api/messages"
         }
     ]
 }
